@@ -1,2 +1,2 @@
-# Democitrus
+# democitrus
 Personal helper discord bot
