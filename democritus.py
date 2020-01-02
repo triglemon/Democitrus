@@ -30,7 +30,7 @@ class Source:
 
         == Attributes ==
             name: Name of the outlet
-            type: Local/International/Culture
+            category: Local/International/Culture
             url: Homepage
             surl: Scraping url
             title: Title tag
@@ -38,16 +38,26 @@ class Source:
             date: Date tag
         """
     name: str
-    type: str
+    category: str
     url: str
     surl: str
     title: str
     link: str
     date: str
 
+    def __init__(self, name: str, category: str, url: str, surl: str, title: str, link: str, date: str) -> None:
+        self.name = name
+        self.category = category
+        self.url = url
+        self.surl = surl
+        self.title = title
+        self.link = link
+        self.date = date
 
-    def __init__(self) -> None:
-        pass
+    def __str__(self):
+        return self.name
+
+
 
 
 bot = Democritus()
