@@ -1,9 +1,23 @@
 import discord
+import asyncio
 from aiohttp import ClientSession
 from discord.ext import commands
 from discord import Game
+from typing import Dict, List
 from bs4 import BeautifulSoup as Soup
 from datetime import datetime
+
+
+async def fetch(session, url):
+    async with session.get(url) as response:
+        if response.status != 200:
+            response.raise_for_status()
+        return await response.text()
+
+
+async def fetch_all_sources(session, sources):
+    results = await asyncio.gather(*[[fetch(session, source.surl), source] for source in sources])
+    return results
 
 
 class Source:
@@ -41,20 +55,33 @@ class Source:
         return self.name
 
 
-class Feed:
+class Democritus(commands.Bot):
     """
-    _.-={ Feed }=-._
-    Encompasses all functions related to news scraping and posting
+    _.-={ democritus }=-._
+    Helper bot for my own server's purposes.
 
-    == Attributes ==
-
+    == Additional Attrs ==
+        session: aiohttp client session for http requests
+        sources: all sources separated into groups based on type
     """
+    session: ClientSession
+    sources: Dict[str: List[Source]]
 
-    def __init__(self):
-        pass
+    def __init__(self) -> None:
+        super().__init__(command_prefix='$',
+                         description='''Rob's Helper Bot.''',
+                         activity=Game('waiting for Godot'))
+        self.session = ClientSession()
 
-    def get_news(self, category):
-        pass
+    def get_news(self, *c_list):
+        s_list = []
+        for category in c_list:
+            s_list += self.sources[category]
+        htmls = await fetch_all_sources(self.session, s_list)
+        print(htmls)
+
+    def get_all_news(self):
+        self.get_news('local', 'international', 'books', 'culture')
 
     def post(self):
         pass
@@ -64,24 +91,6 @@ class Feed:
 
     def post_category(self):
         pass
-
-
-class Democritus(commands.Bot):
-    """
-    _.-={ democritus }=-._
-    Helper bot for my own server's purposes.
-
-    == Additional Attrs ==
-        session: aiohttp client session for http requests
-        feed: for handling functions related to news aggregation
-    """
-    session: ClientSession
-    feed: Feed
-
-    def __init__(self) -> None:
-        super().__init__(command_prefix='$',
-                         description='''Rob's Helper Bot.''',
-                         activity=Game('waiting for Godot'))
 
 
 bot = Democritus()
