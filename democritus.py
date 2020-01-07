@@ -18,10 +18,10 @@ async def fetch(session, url):
 class Source:
     """
     _.-={ Source }=-._
-    Represents a single source or outlet of articles and associated metadata for scraping
+    Represents a single source of articles and associated metadata for scraping
 
     == Attributes ==
-        name: Name of the outlet
+        name: Name of the source
         category: Local/International/Culture
         url: Homepage
         surl: Scraping url
@@ -53,6 +53,23 @@ class Source:
         return self.name
 
 
+class Post:
+    """
+    _.-={ Post }=-._
+    A class representing a single article as a message ready to be posted on discord.
+
+    == Attributes ==
+
+    """
+    def __init__(self, title: str, link: str, date: str, name: str) -> None:
+        self.embed = discord.Embed(title=title, url=link, description=date)
+        self.embed.set_author(name=name)
+        self.message = None
+
+    async def post(self, ctx: commands.Context) -> None:
+        self.message = await ctx.send(embed=self.embed)
+
+
 class Democitrus(commands.Bot):
     """
     _.-={ democritus }=-._
@@ -64,15 +81,20 @@ class Democitrus(commands.Bot):
         posts: list of all posts
     """
     session: ClientSession
-    sources: Dict[str: List[Source]]
+    sources: Dict[str, List[Source]]
+    posts: Dict[str, List[Post]]
 
     def __init__(self) -> None:
         super().__init__(command_prefix='$',
-                         description='''Rob's Helper Bot.''',
+                         description="""Rob's Helper Bot.""",
                          activity=Game('waiting for Godot'))
         self.session = ClientSession()
+        self.sources = {'local': [],
+                        'international': [],
+                        'books': [],
+                        'culture': []}
 
-    def get_news(self, *c_list):
+    async def get_news(self, *c_list: str) -> None:
         s_list = []
         for category in c_list:
             s_list += self.sources[category]
@@ -80,13 +102,19 @@ class Democitrus(commands.Bot):
         for html in h_list:
             source, doc = html[0], html[1]
             soup = Soup(doc)
-            articles = soup.find_all(source.item)
-                
-    def get_all_news(self):
-        self.get_news('local', 'international', 'books', 'culture')
+            a_list = soup.find_all(source.item)
+            for articles in a_list:
+                title = articles[source.title]
+                date = articles[source.date]
+                link = articles[source.link]
+                self.posts[source.category].append(Post(title, link, date, source.name))
 
-    def post(self):
-        pass
+    async def get_all_news(self) -> None:
+        await self.get_news('local', 'international', 'books', 'culture')
+
+    async def post(self, ctx: commands.Context, category: str) -> None:
+        for post in self.posts[category]:
+            await post.post(ctx)
 
     def post_number(self):
         pass
@@ -101,7 +129,7 @@ with open('token') as file:
 
 
 @bot.event
-async def on_ready():
+async def on_ready() -> None:
     bot.sources['local'] = [Source('Toronto Star',
                                    'local',
                                    'www.thestar.ca',
@@ -117,7 +145,8 @@ async def on_ready():
 
 
 @bot.command()
-async def add(ctx, left: int, right: int):
-    await ctx.send(left + right)
+async def post(ctx, category: str) -> None:
+    await bot.get_all_news()
+    await bot.post(ctx, category)
 
 bot.run(token)
