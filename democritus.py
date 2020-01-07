@@ -15,11 +15,6 @@ async def fetch(session, url):
         return await response.text()
 
 
-async def fetch_all_sources(session, sources):
-    results = await asyncio.gather(*[[fetch(session, source.surl), source] for source in sources])
-    return results
-
-
 class Source:
     """
     _.-={ Source }=-._
@@ -30,6 +25,7 @@ class Source:
         category: Local/International/Culture
         url: Homepage
         surl: Scraping url
+        item: Item tag
         title: Title tag
         link: Link tag
         date: Date tag
@@ -38,15 +34,17 @@ class Source:
     category: str
     url: str
     surl: str
+    item: str
     title: str
     link: str
     date: str
 
-    def __init__(self, name: str, category: str, url: str, surl: str, title: str, link: str, date: str) -> None:
+    def __init__(self, name: str, category: str, url: str, surl: str, item: str, title: str, link: str, date: str) -> None:
         self.name = name
         self.category = category
         self.url = url
         self.surl = surl
+        self.item = item
         self.title = title
         self.link = link
         self.date = date
@@ -55,7 +53,7 @@ class Source:
         return self.name
 
 
-class Democritus(commands.Bot):
+class Democitrus(commands.Bot):
     """
     _.-={ democritus }=-._
     Helper bot for my own server's purposes.
@@ -63,6 +61,7 @@ class Democritus(commands.Bot):
     == Additional Attrs ==
         session: aiohttp client session for http requests
         sources: all sources separated into groups based on type
+        posts: list of all posts
     """
     session: ClientSession
     sources: Dict[str: List[Source]]
@@ -77,9 +76,12 @@ class Democritus(commands.Bot):
         s_list = []
         for category in c_list:
             s_list += self.sources[category]
-        htmls = await fetch_all_sources(self.session, s_list)
-        print(htmls)
-
+        h_list = await asyncio.gather(*[[fetch(self.session, source.surl), source] for source in s_list])
+        for html in h_list:
+            source, doc = html[0], html[1]
+            soup = Soup(doc)
+            articles = soup.find_all(source.item)
+                
     def get_all_news(self):
         self.get_news('local', 'international', 'books', 'culture')
 
@@ -93,13 +95,21 @@ class Democritus(commands.Bot):
         pass
 
 
-bot = Democritus()
+bot = Democitrus()
 with open('token') as file:
     token = file.read()
 
 
 @bot.event
 async def on_ready():
+    bot.sources['local'] = [Source('Toronto Star',
+                                   'local',
+                                   'www.thestar.ca',
+                                   'http://www.thestar.com/content/thestar/feed.RSSManagerServlet.articles.news.rss',
+                                   'item',
+                                   'title',
+                                   'link',
+                                   'pubDate')]
     print('Logged in as')
     print(bot.user.name)
     print(bot.user.id)
