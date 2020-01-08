@@ -93,21 +93,25 @@ class Democitrus(commands.Bot):
                         'international': [],
                         'books': [],
                         'culture': []}
+        self.posts = {'local': [],
+                      'international': [],
+                      'books': [],
+                      'culture': []}
 
     async def get_news(self, *c_list: str) -> None:
         s_list = []
         for category in c_list:
             s_list += self.sources[category]
-        h_list = await asyncio.gather(*[[fetch(self.session, source.surl), source] for source in s_list])
+        h_list = await asyncio.gather(*[fetch(self.session, source.surl) for source in s_list])
         for html in h_list:
-            source, doc = html[0], html[1]
-            soup = Soup(doc)
-            a_list = soup.find_all(source.item)
-            for articles in a_list:
-                title = articles[source.title]
-                date = articles[source.date]
-                link = articles[source.link]
-                self.posts[source.category].append(Post(title, link, date, source.name))
+            soup = Soup(html, 'xml')
+            a_list = soup.find_all(s_list[0].item)
+            for article in a_list:
+                print(article)
+                title = article.find(s_list[0].title).contents[0]
+                link = article.find(s_list[0].link).contents[0]
+                date = article.find(s_list[0].date).contents[0]
+                self.posts[s_list[0].category].append(Post(title, link, date, s_list[0].name))
 
     async def get_all_news(self) -> None:
         await self.get_news('local', 'international', 'books', 'culture')
