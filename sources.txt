@@ -1,0 +1,33 @@
+<local>
+National Post,
+Global News,
+Globe and Mail,
+Toronto Star,
+CBC,
+<international>
+The New York Times
+The Wall Street Journal
+The Washington Post
+BBC
+The Economist
+The New Yorker
+The Atlantic
+Politico
+The Independent
+The Guardian
+Foreign Affairs
+Washington Times
+Associated Press
+Time
+<books>
+The New Yorker
+Ploughshares
+The Paris Review
+The Atlantic
+Granta
+Lithub
+<culture>
+Nature
+Science
+Mind
+Hackernews

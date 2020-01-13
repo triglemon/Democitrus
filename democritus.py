@@ -1,5 +1,6 @@
 import discord
 import asyncio
+import dateparser
 from aiohttp import ClientSession
 from discord.ext import commands
 from discord import Game
@@ -107,7 +108,6 @@ class Democitrus(commands.Bot):
             soup = Soup(html, 'xml')
             a_list = soup.find_all(s_list[0].item)
             for article in a_list:
-                print(article)
                 title = article.find(s_list[0].title).contents[0]
                 link = article.find(s_list[0].link).contents[0]
                 date = article.find(s_list[0].date).contents[0]
@@ -117,8 +117,8 @@ class Democitrus(commands.Bot):
         await self.get_news('local', 'international', 'books', 'culture')
 
     async def post(self, ctx: commands.Context, category: str) -> None:
-        for post in self.posts[category]:
-            await post.post(ctx)
+        for p in self.posts[category]:
+            await p.post(ctx)
 
     def post_number(self):
         pass
